@@ -1,0 +1,117 @@
+import matplotlib.pyplot as plt
+
+import pandas as pd
+
+import numpy as np
+
+chengji = pd.read_csv("C:\\Users\\Administrator\\Desktop\\chengji.csv",encoding='GBK')
+
+
+chengji[1:11].shape
+
+(10, 10)
+
+a = chengji.iloc[:,:-3]
+
+b = chengji.iloc[:,-3:][(0<=chengji.iloc[:,-3:]) & (chengji.iloc[:,-3:]<=30)]
+
+df = pd.concat([a,b],axis=1)
+
+nan_rows = df[df.isnull().T.any().T]
+
+df = df.dropna(axis=0,how='any')
+
+df.shape
+
+(97, 10)
+
+data1 = df[df["班级"]==201]
+
+data2 = df[df["班级"]==202]
+
+data_1 = data1["语文(130)"]
+
+data_2 = data2["语文(130)"]
+
+from pylab import *
+
+mpl.rcParams['font.sans-serif'] = ['SimHei']
+
+#数据处理
+
+name1 = data1["姓名"]
+
+name2 = data2["姓名"]
+
+df1,df2 = [],[]
+
+for i in range(name1.shape[0]):
+
+    for j in range(list(data_1)[i]):
+
+        df1.append(list(name1)[i])
+
+for i in range(name2.shape[0]):
+
+    for j in range(list(data_2)[i]):
+
+        df2.append(list(name2)[i])
+
+plt.figure(figsize=(10,10),dpi=80)    # 创建画布
+
+#分区
+
+plt.subplot2grid((1,2),(0,0))
+
+plt.title("201班语文成绩直方图")
+
+plt.hist(df1,name1.shape[0])
+
+plt.xticks(rotation=90)
+
+plt.subplot2grid((1,2),(0,1))
+
+plt.title("202班语文成绩直方图")
+
+plt.hist(df2,name2.shape[0])
+
+plt.xticks(rotation=90)
+
+plt.show()
+
+def sum(data):
+
+    return data["语文(130)"]+data["数学(130)"]+data["英语(100)"]+data["历史(30)"]+data["地理(30)"]+data["政治(30)"]
+
+
+data1["总成绩"] = sum(data1)
+
+data2["总成绩"] = sum(data2)
+
+#导入柱状图-Bar
+
+from pyecharts import Bar
+
+#设置行名
+
+col = data1["姓名"]
+
+#设置数据
+
+d = data1["总成绩"]
+
+#设置柱状图的主标题与副标题
+
+#bar = Bar("柱状图", "一年的降水量与蒸发量")
+
+#添加柱状图的数据及配置项
+
+#bar.add("降水量", columns, data1, mark_line=["average"], mark_point=["max", "min"])
+
+#bar.add("蒸发量", columns, data2, mark_line=["average"], mark_point=["max", "min"])
+
+#生成本地文件（默认为.html文件）
+
+#bar.render()
+
+
