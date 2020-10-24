@@ -1,0 +1,179 @@
+import os
+os.chdir(r'H:\平台资源配套\4 Python数据分析与应用\01-数据和代码\第4章\01-任务程序')import pandas as pd
+from sqlalchemy import create_engine
+
+engin = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/test?charset=utf8')
+
+import os
+
+os.chdir(r'H:\平台资源配套\4 Python数据分析与应用\01-数据和代码\第4章\01-任务程序')
+
+import pandas as pd
+
+from sqlalchemy import create_engine
+
+engin = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/test?charset=utf8')
+
+pd.read_sql_table('meal_order_detail1', con=engin)
+
+pd.read_sql_query('select * from meal_order_detail1', con=engin)
+
+pd.read_sql('meal_order_detail1', con=engin)
+
+pd.read_sql('select * from meal_order_detail1', con=engin)
+
+data = pd.read_sql_query('select * from meal_order_detail1', con=engin)
+
+data.to_sql('temp', con=engin, if_exists='replace')
+
+pd.read_table('./data/meal_order_info.csv', encoding='gbk', sep=',')
+
+pd.read_csv('./data/meal_order_info.csv', encoding='gbk')
+
+data.to_csv('./tmp/temp.csv', index=False)
+
+pd.read_excel('./data/meal_order_detail.xlsx')
+
+data.to_excel('./tmp/temp.xlsx', sheet_name='a')
+
+data.to_excel('./tmp/temp.xlsx', sheet_name='b')
+
+with pd.ExcelWriter('./tmp/temp.xlsx') as w:
+
+    data.to_excel(w, sheet_name='a')
+
+    data.to_excel(w, sheet_name='b')
+
+import pandas as pd
+
+from sqlalchemy import create_engine
+engin = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/test?charset=utf8')
+
+data = pd.read_sql_table('meal_order_detail1', con=engin)
+
+data.index
+
+data.values
+
+print(data.columns)
+
+data.dtypes
+
+data.size
+
+data.shape
+
+data.ndim
+
+data['dishes_name'][:5]
+
+# data.dishes_name
+
+data.iloc[2, 2]
+
+data.loc[2, 'dishes_id']
+
+data.ix[2, 2]
+
+data.ix[2, 'dishes_id']
+
+print(data.iloc[2:5, 2])
+
+print(data.loc[2:5, 'dishes_id'])
+
+data2 = data.loc[data['order_id'] == '458', :]
+
+data2['order_id'] = '45800'
+
+data2['total_price'] = data2['counts'] * data2['amounts']
+
+data2.head(3)
+
+# data2.tail()
+
+data2.drop(labels='total_price', axis=1, inplace=True)
+
+data2.columns
+
+del data2['detail_id']
+
+data2.mean()
+
+data2.min()
+
+data2.describe()
+
+data['dishes_name'].value_counts()
+
+data['dishes_name'].astype('category').describe()
+
+import pandas as pd
+
+data = pd.read_csv('./data/meal_order_info.csv', encoding='gbk')
+
+data.head()
+
+data.columns
+
+data['lock_time'] = pd.to_datetime(data['lock_time'])
+
+pd.Timedelta.min
+
+pd.Timestamp.min
+
+pd.Timestamp.max
+
+pd.DatetimeIndex(data['use_start_time'])
+
+pd.PeriodIndex(data['use_start_time'], freq='S')
+
+a = data.loc[0, 'lock_time']
+
+print(a)
+
+a.year
+
+a.dayofyear
+
+a.weekday_name
+
+data['lock_time'] + pd.Timedelta(days=1, seconds=1)
+
+data['lock_time'] - pd.to_datetime('2019-5-20 17:55:00')
+
+import pandas as pd
+
+from sqlalchemy import create_engine
+
+engine = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/test?charset=utf8')
+
+data = pd.read_sql('meal_order_detail1', con=engine)
+
+data_gb = data[['order_id', 'counts', 'amounts']].groupby(by='order_id')
+
+data_gb.count()
+
+data_gb.sum()
+import numpy as np
+data[[ 'counts', 'amounts']].agg(np.sum)
+data[[ 'counts', 'amounts']].agg([np.sum, np.mean])
+data[[ 'counts', 'amounts']].agg({'counts':np.sum, 'amounts':[np.sum, np.mean]})
+data_gb.agg(np.sum)
+data_gb.sum()
+data_gb.agg({'counts':np.sum, 'amounts':[np.sum, np.mean]})
+data[[ 'counts', 'amounts']].apply(np.sum)
+data_gb.apply(np.sum)
+print(data[[ 'counts', 'amounts']].transform(lambda x: x**2).head())
+print(data[[ 'counts', 'amounts']].head())
+data_gb.transform(lambda x: (x.mean() - x.min())/(x.max() - x.min()))
+import pandas as pd
+from sqlalchemy import create_engine
+engine = create_engine('mysql+pymysql://root:123456@127.0.0.1:3306/test?charset=utf8')
+data = pd.read_sql('meal_order_detail1', con=engine)
+pd.pivot_table(data[['order_id', 'counts', 'amounts']], index='order_id', aggfunc=np.sum)
+pd.pivot_table(data[['order_id', 'counts', 'amounts', 'dishes_name']], 
+               index=['order_id', 'dishes_name'], aggfunc=np.sum)
+pd.pivot_table(data[['order_id', 'counts', 'amounts', 'dishes_name']], index='order_id',
+               columns='dishes_name', margins=True, aggfunc=np.sum)
+pd.crosstab(index=data['order_id'], columns=data['dishes_name'], values=data['counts'], dropna=True,
+            margins=True, aggfunc=np.sum).fillna(0)
