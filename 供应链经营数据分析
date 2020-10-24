@@ -1,0 +1,111 @@
+import numpy as np
+import pandas as pd
+#import seaborn as sns
+import matplotlib.pyplot as plt
+from pylab import *
+mpl.rcParams['font.sans-serif'] = ['SimHei']
+data = pd.read_excel("380平台－数据源.xlsx").fillna(0)# 0替换所有的NAN值
+df1 = data["业务利润1"]+data["经营利润1"]
+df1.name= "利润"
+time_profit = pd.concat((data["日期"],df1),axis = 1)
+day = list(str(i)[:11] for i in data["日期"].value_counts().index)
+all_profit = []
+for i in day:
+    all_profit.append(time_profit[time_profit["日期"]==i]["利润"].sum())
+dic = {}
+dic["日期"] = day
+dic["利润"] = all_profit
+df = pd.DataFrame(dic)
+# 计算月环比
+link_r_r = ["0%"]
+for i in range(1,df.shape[0]):
+    rate = (df.iloc[i][1]-df.iloc[i-1][1])/df.iloc[i-1][1]
+    link_r_r.append('%.2f%%' % (rate * 100)) 
+dic["月环比"] = link_r_r[::-1]
+#计算月同比
+ls = ["0%" for i in range(12)]
+for i in range(12):
+    rate2 = (df.iloc[i+12][1]-df.iloc[i][1])/df.iloc[i][1]
+    ls.append('%.2f%%' % (rate2 * 100))
+dic["月同比"] = ls[::-1]
+df = pd.DataFrame(dic).iloc[::-1].reset_index(drop = True)
+df
+# 写入数据
+x = [i[:7]for i in list(df["日期"])]
+y = list(df["利润"])
+plt.figure(figsize =(20,8),dpi=80)
+plt.plot(x,y)
+#插入网格
+plt.grid(True,linestyle = "--",alpha = 0.5)# 是否插入 类型 透明度
+
+#添加描述信息
+plt.xlabel("日期")
+plt.ylabel("利润")
+plt.title("日期_利润变化图")
+
+plt.show()
+client = pd.concat([data["行业"],data["日期"],df1],axis= 1).fillna(0)
+client_name = list(client["行业"].value_counts().index)
+client_profit = []
+for i in client_name:
+    client_profit.append(client[client["行业"]==i]["利润"].sum())
+# 每个客户的利润
+dic_c = {}
+dic_c["行业"]=client_name
+dic_c["利润"] = client_profit
+result = pd.DataFrame(dic_c)
+#创建画布
+plt.figure(figsize=(20,8),dpi = 80)
+#绘制图像
+plt.pie(result["利润"],labels=result["行业"])
+#展示效果
+plt.legend()
+plt.show()
+### 三.各行业每月的盈利情况
+dic_c_m = {}  #{行业：日期+利润}
+for i in client_name:
+    dic_c_m[i] = client[client["行业"]==i][["日期","利润"]]
+cli_month = pd.DataFrame()
+for j in client_name:
+    a = pd.DataFrame(dic_c_m[j])
+    b = list(a["日期"].value_counts().index)
+    ls = []
+    for i in b:
+        ls.append(a[a["日期"]==i].sum()[0])
+    dic = {}
+    dic[j] = b
+    dic[j+"利润"] = ls
+    cli_month = pd.concat([cli_month,pd.DataFrame(dic)],axis= 1)
+cli_month
+### 4.母婴产品分析
+infant = pd.concat([data["结算客户"],client],axis = 1)[client["行业"]=="母婴"]
+infant_name = infant["结算客户"].value_counts().index
+ls = []
+dic = {}
+for i in infant_name:
+    ls.append(infant[infant["结算客户"]==i]["利润"].sum())
+dic["结算客户"] = infant_name
+dic["利润"] = ls
+result = pd.DataFrame(dic)
+#创建画布
+plt.figure(figsize=(20,8),dpi = 80)
+#绘制图像
+plt.pie(result["利润"],labels=result["结算客户"])
+#展示效果
+plt.show()
+infant_diqu = pd.concat([data[["行业","城市"]],df1],axis= 1)
+infant_diqu = infant_diqu[infant_diqu["行业"]=="母婴"]
+infant_diqu_name = infant_diqu["城市"].value_counts().index
+ls = []
+dic = {}
+for i in infant_diqu_name:
+    ls.append(infant_diqu[infant_diqu["城市"]==i]["利润"].sum())
+dic["城市"] = infant_diqu_name
+dic["利润"] = ls
+result = pd.DataFrame(dic)
+#创建画布
+plt.figure(figsize=(20,8),dpi = 80)
+#绘制图像
+plt.pie(result["利润"],labels=result["城市"])
+#展示效果
+plt.show()
