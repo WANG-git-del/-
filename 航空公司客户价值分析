@@ -1,0 +1,173 @@
+import numpy as np
+import pandas as pd
+airline_data = pd.read_csv("air_data.csv",encoding="GB18030")
+airline_data.columns
+数据预处理
+
+    清除异常值（丢弃票价为空的值）
+    清除异常数据
+
+第一年的票价为空的数量
+
+sum(airline_data["SUM_YR_1"].isnull())
+
+551
+
+两年各不为空的记录
+
+exp1 = airline_data["SUM_YR_1"].notnull()
+
+exp2 = airline_data["SUM_YR_2"].notnull()
+
+剔除票价为空的记录
+
+airline_data_notnull = airline_data[exp1 & exp2]
+
+清除异常数据
+
+index1 = airline_data_notnull["SUM_YR_1"] == 0
+
+index2 = airline_data_notnull["SUM_YR_2"] == 0
+
+index3 = airline_data_notnull["avg_discount"] != 0
+
+index4 = airline_data_notnull["SEG_KM_SUM"] > 0
+
+airline = airline_data_notnull[-(index1&index2&index3&index4)]
+
+构建模型
+
+选出需要的数据
+
+airline_selection = airline[["FFP_DATE","LOAD_TIME","FLIGHT_COUNT","LAST_TO_END","avg_discount","SEG_KM_SUM"]]
+
+数据转化为time类型
+
+airline_selection["LOAD_TIME"]=pd.to_datetime(airline_selection["LOAD_TIME"])
+
+airline_selection["FFP_DATE"]=pd.to_datetime(airline_selection["FFP_DATE"])
+
+入会时常L---------构建时间差
+
+L = airline_selection["LOAD_TIME"]-airline_selection["FFP_DATE"]
+
+L = L.astype(str).str.split().str[0]
+
+转换类型
+
+L = L.astype(int)/30
+
+剩余特征的构建
+
+airline_features = pd.concat([L,airline_selection.iloc[:,2:]],axis=1)
+
+airline_features.columns = list("LRFMC")
+
+airline_features  # 五个特征全部构建完成
+
+from sklearn.cluster import KMeans
+
+from sklearn.preprocessing import StandardScaler
+
+数据标准化（统一量纲），聚类分析
+
+data = StandardScaler().fit_transform(airline_features)
+
+kmeans_model = KMeans(n_clusters=5 ).fit(data)
+
+打印出聚类中心
+
+kmeans_model
+
+KMeans(algorithm='auto', copy_x=True, init='k-means++', max_iter=300,
+       n_clusters=5, n_init=10, n_jobs=None, precompute_distances='auto',
+       random_state=None, tol=0.0001, verbose=0)
+
+
+打印出每个样本的聚类标签
+
+kmeans_model.labels_
+
+array([2, 2, 2, ..., 1, 0, 3])
+
+数据可视化
+
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+def plot(kmeans_model=None, columns=None):
+
+    '''
+
+    此函数用户绘制客户分群结果的雷达图
+
+    :param kmeans_model: 聚类的结果
+
+    :param columns: 各特征的明亨
+
+    :return: 客户分群的雷达图
+
+    '''
+
+    plt.figure(figsize=(11, 11))
+
+    # 中文和负号的正常显示
+
+    plt.rcParams['font.sans-serif'] = 'SimHei'
+
+    plt.rcParams['axes.unicode_minus'] = False
+
+
+    plt.style.use('ggplot')  # 使用ggplot的绘图风格
+
+    N = len(columns)         # 特征数
+
+
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False)  # 设置雷达图的角度，用于平分切开一个圆面
+
+    angles = np.concatenate((angles, [angles[0]]))         # 为了使雷达图一圈封闭起来
+
+    '''
+
+    绘图
+
+    '''
+
+    feature = columns     # 特征名称
+
+    fig = plt.figure()
+
+    ax = fig.add_subplot(1,1,1, polar=True)           # 这里一定要设置为极坐标格式
+
+    ax.set_thetagrids(angles * 180 / np.pi, feature)  # 添加每个特征的标签
+
+    ax.set_ylim(kmeans_model.cluster_centers_.min(), kmeans_model.cluster_centers_.max())  # 设置雷达图的范围
+
+    plt.title('客户群特征分布图')           # 添加标题
+
+    ax.grid(True)                         # 添加网格线
+
+    sam = ['r-', 'o-', 'g-', 'b-', 'p-']  # 样式
+
+    lab = []
+
+    for i in range(len(kmeans_model.cluster_centers_)):  # 依次绘制每个类中心的图像
+
+        values = kmeans_model.cluster_centers_[i]
+
+        values = np.concatenate((values, [values[0]]))   # 为了使雷达图一圈封闭起来，需要下面的步骤
+
+        ax.plot(angles, values, sam[i], linewidth=2)     # 绘制折线图
+
+        ax.fill(angles, values, alpha=0.25)              # 填充颜色
+
+        lab.append('客户群' + str(i))
+
+    plt.legend(lab)
+
+    plt.show()  # 显示图形
+
+对每个聚类中心点可视化（5个）
+
+plot(kmeans_model,airline_features.columns)
