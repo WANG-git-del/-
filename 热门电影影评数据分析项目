@@ -1,0 +1,276 @@
+import pandas as pd
+
+import jieba
+
+import re
+
+data = pd.read_excel("C:\\Users\\Administrator\\Desktop\\泰迪云课堂\\流浪地球.xlsx",encoding="utf=8")
+
+bad = data[data["scores"]=="comment-time "]
+
+bad_index = list(bad.index)
+
+data = data.drop(bad_index)
+
+string = "I am a student, and my name is Wanglongf."
+
+re.search("am",string)    # 寻找第一个符合的位置
+
+re.sub("am","like",string)# 替换
+
+re.findall("am",string)   #找出所有
+
+re.findall("s.{5}t",string)
+
+obs = "今天我来到北京清华大学"
+
+list(jieba.cut(obs))
+
+list(jieba.cut_for_search(obs))
+
+jieba.lcut(obs)# 直接返回列表lcut
+
+sentence = "广州泰迪智能科技有限公司欢迎你"
+
+jieba.lcut(sentence)
+
+jieba.add_word('广州泰迪有限公司')
+
+jieba.lcut(sentence)
+
+txt = data["content"]
+
+data_cut = [jieba.lcut(x) for x in txt]
+
+all_words=[]
+
+for i in data_cut:
+
+    all_words.extend(i)
+
+# 统计词频
+
+num = pd.Series(all_words).value_counts()
+
+import matplotlib.pyplot as plt
+
+from wordcloud import WordCloud
+
+# 1.读取背景图片
+
+pic = plt.imread("1.jpg")
+
+# 2.设置词云参数
+
+wc = WordCloud(background_color="white",font_path="C:\\windows\\Fonts\\simkai.TTF",
+
+               mask=pic)
+
+wc2 = wc.fit_words(num)
+
+# 3.词云展示
+
+plt.imshow(wc2)
+
+plt.axis("off")#去掉黑色边框
+
+plt.show
+
+with open("C:\\Users\\Administrator\\Desktop\\泰迪云课堂\\stoplist.txt","r",encoding="utf-8") as f:
+
+    stop = f.read()
+
+stop = stop.split()
+
+stop = [" ","\n"]+stop
+
+data_after = [[j for j in i if j not in stop]for i in data_cut]
+
+all_words=[]
+
+for i in data_after:
+
+    all_words.extend(i)
+
+new_num = pd.Series(all_words).value_counts()
+
+# 1.读取背景图片
+
+pic = plt.imread("3.jpg")
+
+# 2.设置词云参数
+
+wc = WordCloud(background_color="white",font_path="C:\\windows\\Fonts\\simkai.TTF",
+
+               mask=pic)
+
+wc2 = wc.fit_words(new_num)
+
+# 3.词云展示
+
+plt.imshow(wc2)
+
+plt.axis("off")#去掉黑色边框
+
+plt.show
+good0 = data[data["evaluate"]=="推荐"]# 好评
+
+good1 =  data[data["evaluate"]=="力荐"]# 好评
+
+normal = data[data["evaluate"]=="还行"]#中评
+
+bad0 = data[data["evaluate"]=="较差"] #差评
+
+bad1 = data[data["evaluate"]=="很差"] #差评
+
+bad = pd.concat([bad0,bad1])
+
+good = pd.concat([good,good1])
+
+def lcut_wc(data,stoplist,pict):# 数据
+
+    txt = data["content"]
+
+    data_cut = [jieba.lcut(x) for x in txt]
+
+    stop = stoplist.read()
+
+    stop = stop.split()
+
+    stop = [" ","\n"]+stop
+
+    data_after = [[j for j in i if j not in stop]for i in data_cut]
+
+    all_words=[]
+
+    for i in data_after:
+
+        all_words.extend(i)
+
+    num = pd.Series(all_words).value_counts()
+
+    # 1.读取背景图片
+
+    pic = pict
+
+    # 2.设置词云参数
+
+    wc = WordCloud(background_color="white",font_path="C:\\windows\\Fonts\\simkai.TTF",
+
+                   mask=pic)
+
+    wc2 = wc.fit_words(num)
+
+    # 3.词云展示
+
+    plt.imshow(wc2)
+
+    plt.axis("off")#去掉黑色边框
+
+    plt.show
+
+stoplist2 = open("C:\\Users\\Administrator\\Desktop\\泰迪云课堂\\stoplist.txt","r",encoding="utf-8")
+
+pic = plt.imread("3.jpg")
+
+lcut_wc(good,stoplist2,pic)
+
+stoplist2 = open("C:\\Users\\Administrator\\Desktop\\泰迪云课堂\\stoplist.txt","r",encoding="utf-8")
+
+pic = plt.imread("3.jpg")
+
+lcut_wc(bad,stoplist2,pic)
+
+stoplist2 = open("C:\\Users\\Administrator\\Desktop\\泰迪云课堂\\stoplist.txt","r",encoding="utf-8")
+
+pic = plt.imread("3.jpg")
+
+lcut_wc(normal,stoplist2,pic)
+
+ls = []
+
+for i in data["times"]:
+
+    ls.append(i[:11])
+
+time = pd.Series(ls)
+
+times = pd.Series(time.value_counts()).sort_index()    
+
+from pylab import *
+
+mpl.rcParams['font.sans-serif'] = ['SimHei']
+
+plt.figure(figsize=(20,8),dpi=80)
+
+x = list(times.index)
+
+y = list(times.values)
+
+plt.title("电影短评数量变化曲线图(随日期)")
+
+plt.plot(x,y)
+
+plt.xticks(rotation=-90)
+
+plt.show()
+
+ls = []
+
+for i in data["times"]:
+
+    ls.append(i[:13])
+
+time = pd.Series(ls)
+
+times = pd.Series(time.value_counts()).sort_index()
+
+plt.figure(figsize=(35,8),dpi=80)
+
+x = list(times.index)
+
+y = list(times.values)
+
+plt.title("电影短评数量变化曲线图(随时刻)")
+
+plt.plot(x,y)
+
+plt.xticks(rotation=-90)
+
+plt.show()
+
+new_data = data[["times","scores"]]
+
+for i in new_data.index:
+
+    new_data["scores"][i]= int(re.findall("[0-9]{2}",str(new_data["scores"][i]))[0])
+
+    new_data["times"][i] = new_data["times"][i][:11]
+
+new_data = new_data.sort_values(by="times")
+
+time = list(new_data["times"].value_counts().index)
+
+dic = {}
+
+for i in time:
+
+    dic[i]=new_data[new_data["times"]==i]["scores"].mean()
+
+DF = {"times":list(dic.keys()),"scores":list(dic.values())}
+
+result = pd.DataFrame(DF).sort_values(by="times")
+
+plt.figure(figsize=(20,8),dpi=80)
+
+x = list(result["times"])
+
+y = list(result["scores"])
+
+plt.title("电影评分变化曲线图(随日期)")
+
+plt.plot(x,y)
+
+plt.xticks(rotation=-90)
+
+plt.show()
